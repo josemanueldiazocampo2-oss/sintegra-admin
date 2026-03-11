@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- FIX #8: Content Security Policy para el panel admin -->
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' https://www.gstatic.com https://www.googleapis.com https://apis.google.com 'unsafe-inline';
+                 script-src-elem 'self' https://www.gstatic.com https://www.googleapis.com https://apis.google.com 'unsafe-inline';
+                 connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://apis.google.com;
+                 img-src 'self' https: data:;
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+                 font-src 'self' https://fonts.gstatic.com;
+                 frame-src https://sintegra-store.firebaseapp.com https://accounts.google.com https://*.firebaseapp.com;">
+    <title>Panel de Control | Sintegra Store</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Pantalla de Login -->
+    <div id="loginScreen" class="login-screen">
+        <div class="glass-panel login-box">
+            <div class="login-header">
+                <div class="logo-wrapper" style="justify-content: center; margin-bottom: 1rem;">
+                    <img src="https://raw.githubusercontent.com/josemanueldiazocampo2-oss/imagenes/refs/heads/main/Gemini_Generated_Image_btixxkbtixxkbtix.png"
+                        alt="Sintegra Store Logo" class="logo-img" style="width: 60px; height: 60px;">
+                </div>
+                <h2>🔐 Acceso Administrativo</h2>
+                <p style="color: var(--text-muted); margin: 0;">Sintegra Store</p>
+            </div>
+            <div style="text-align: center; margin-top: 2rem;">
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Inicia sesión con tu cuenta de Google autorizada</p>
+                <button type="button" id="googleLoginBtn" class="btn"
+                    style="width: 100%; background: white; color: #444; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: bold;">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="Google">
+                    Entrar con Google
+                </button>
+                <p id="loginError" style="color: var(--danger); margin-top: 1rem; font-size: 0.9rem; display: none;"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interfaz Admin (oculta hasta autenticar) -->
+    <div id="adminInterface" style="display:none;">
+        <div class="container">
+            <header class="admin-header glass-panel">
+                <div class="admin-header-left">
+                    <h1>Panel de Gestión</h1>
+                    <span id="currentUserDisplay" class="current-user"></span>
+                </div>
+                <div class="admin-header-actions">
+                    <button id="logoutBtn" class="btn">🚪 Salir</button>
+                </div>
+            </header>
+
+            <nav class="admin-nav">
+                <button class="nav-tab active" data-tab="citas">📅 Citas</button>
+                <button class="nav-tab" data-tab="webs">🌐 Webs</button>
+                <button class="nav-tab" data-tab="visionMision">🎯 Visión y Misión</button>
+                <button class="nav-tab" data-tab="team">👥 Equipo</button>
+            </nav>
+
+            <div id="citasSection" class="admin-section active">
+                <div class="glass-panel">
+                    <h2>📅 Citas Solicitadas</h2>
+                    <div id="citasList" class="citas-list"></div>
+                </div>
+            </div>
+
+            <div id="websSection" class="admin-section">
+                <div class="admin-layout">
+                    <section class="glass-panel">
+                        <h2>➕ Nueva Web</h2>
+                        <form id="addWebForm">
+                            <input type="text" id="webName" placeholder="Nombre" required maxlength="100">
+                            <input type="url" id="webUrl" placeholder="URL (https://...)" required maxlength="300">
+                            <input type="text" id="webCategory" placeholder="Categoría" required maxlength="50">
+                            <textarea id="webDescription" placeholder="Descripción" maxlength="500"></textarea>
+                            <button type="submit" class="btn" style="width:100%">📤 Guardar</button>
+                        </form>
+                    </section>
+                    <section class="glass-panel">
+                        <h2>📋 Lista de Webs</h2>
+                        <div id="websList"></div>
+                    </section>
+                </div>
+            </div>
+
+            <div id="visionMisionSection" class="admin-section">
+                <div class="admin-layout">
+                    <section class="glass-panel">
+                        <h2>🎯 Misión</h2>
+                        <form id="saveMisionForm">
+                            <textarea id="misionText" placeholder="Escribe la misión de la empresa..." rows="8" style="resize: vertical;" maxlength="2000"></textarea>
+                            <button type="submit" class="btn" style="width:100%; margin-top: 1rem;">💾 Guardar Misión</button>
+                        </form>
+                    </section>
+                    <section class="glass-panel">
+                        <h2>👁️ Visión</h2>
+                        <form id="saveVisionForm">
+                            <textarea id="visionText" placeholder="Escribe la visión de la empresa..." rows="8" style="resize: vertical;" maxlength="2000"></textarea>
+                            <button type="submit" class="btn" style="width:100%; margin-top: 1rem;">💾 Guardar Visión</button>
+                        </form>
+                    </section>
+                </div>
+            </div>
+
+            <div id="teamSection" class="admin-section">
+                <div class="admin-layout">
+                    <section class="glass-panel">
+                        <h2>➕ Invitar Admin</h2>
+                        <!-- Solo visible para el host -->
+                        <div id="addAdminFormWrapper">
+                            <form id="addAdminForm">
+                                <input type="text" id="newAdminName" placeholder="Nombre" required maxlength="80">
+                                <input type="email" id="newAdminEmail" placeholder="correo@gmail.com" required maxlength="100">
+                                <button type="submit" class="btn" style="width:100%">👤 Agregar</button>
+                            </form>
+                        </div>
+                        <p id="noAddAdminMsg" style="display:none; color: var(--text-muted); font-size:0.9rem;">Solo el administrador principal puede agregar nuevos miembros.</p>
+                    </section>
+                    <section class="glass-panel">
+                        <h2>👥 Miembros</h2>
+                        <div id="teamList"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
